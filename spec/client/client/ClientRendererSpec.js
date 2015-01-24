@@ -1,6 +1,7 @@
 "use strict";
 
 var ClientRenderer = require("lib/client/ClientRenderer");
+var HasPageLevelData = require("lib/traits/HasPageLevelData");
 var Layout = require("lib/viewing/Layout");
 var View = require("lib/viewing/View");
 
@@ -8,7 +9,8 @@ describe("ClientRenderer", function() {
 
     var layout;
     var view;
-    var onRender;
+    var metatags;
+    var ViewWithPageLevelData;
 
     beforeEach(function() {
         layout = new Layout();
@@ -18,6 +20,9 @@ describe("ClientRenderer", function() {
         spyOn(layout, "backToNormal");
         spyOn(layout, "setContentToAttachedView");
         spyOn(layout, "setContent");
+        spyOn(layout, "setTitle");
+        spyOn(layout, "setMetaTags");
+        spyOn(layout, "renderPageLevelData");
 
         view = new View();
         spyOn(view, "render");
@@ -25,61 +30,17 @@ describe("ClientRenderer", function() {
         spyOn(view, "enterDOM");
         spyOn(view, "setUid");
 
-        onRender = jasmine.createSpy();
+        ViewWithPageLevelData = View.extend(HasPageLevelData);
     });
 
     describe("on all renders", function() {
 
         beforeEach(function() {
-            ClientRenderer.render(layout, false, view, onRender, 1);
+            ClientRenderer.render(layout, view, 1);
         });
 
         it("attempts to reattach view", function() {
             expect(view.reattach).toHaveBeenCalled();
-        });
-
-        it("alerts view that it is in the DOM", function() {
-            expect(view.enterDOM).toHaveBeenCalled();
-        });
-
-    });
-
-    describe("when it should initialize layout", function() {
-
-        beforeEach(function() {
-            ClientRenderer.render(layout, true, view, onRender, 1);
-        });
-
-        it("should reattach layout", function() {
-            expect(layout.reattach).toHaveBeenCalled();
-        });
-
-        it("should render layout", function() {
-            expect(layout.render).toHaveBeenCalled();
-        });
-
-        it("should enterDOM layout", function() {
-            expect(layout.enterDOM).toHaveBeenCalled();
-        });
-
-    });
-
-    describe("when it should NOT initialize layout", function() {
-
-        beforeEach(function() {
-            ClientRenderer.render(layout, false, view, onRender, 1);
-        });
-
-        it("should reattach layout", function() {
-            expect(layout.reattach).not.toHaveBeenCalled();
-        });
-
-        it("should render layout", function() {
-            expect(layout.render).not.toHaveBeenCalled();
-        });
-
-        it("should enterDOM layout", function() {
-            expect(layout.enterDOM).not.toHaveBeenCalled();
         });
 
     });
@@ -88,7 +49,7 @@ describe("ClientRenderer", function() {
 
         beforeEach(function() {
             view.isAttached = true;
-            ClientRenderer.render(layout, false, view, onRender, 1);
+            ClientRenderer.render(layout, view, 1);
         });
 
         it("renders the view", function() {
@@ -109,7 +70,7 @@ describe("ClientRenderer", function() {
 
         beforeEach(function() {
             view.isAttached = false;
-            ClientRenderer.render(layout, false, view, onRender, 1);
+            ClientRenderer.render(layout, view, 1);
         });
 
         it("does NOT render the view directly", function() {
@@ -129,7 +90,7 @@ describe("ClientRenderer", function() {
     describe("when view is Brisket.View", function() {
 
         beforeEach(function() {
-            ClientRenderer.render(layout, false, view, onRender, 1);
+            ClientRenderer.render(layout, view, 1);
         });
 
         it("sets uid to reflect current request and it's creation order", function() {
@@ -138,44 +99,97 @@ describe("ClientRenderer", function() {
 
     });
 
-    describe("setting extra render instructions in layout", function() {
+    describe("when view has page level data", function() {
 
         beforeEach(function() {
-            layout.render.andCallThrough();
+            metatags = {
+                description: "description"
+            };
+
+            view.withTitle("Title")
+                .withMetatags(metatags);
+
+            ClientRenderer.render(layout, view);
         });
 
-        describe("when should initialize layout AND layout has NOT been rendered yet", function() {
-
-            beforeEach(function() {
-                layout.hasBeenRendered = false;
-                ClientRenderer.render(layout, true, view, onRender, 1);
-            });
-
-            it("resets layout to normal", function() {
-                expect(layout.backToNormal).toHaveBeenCalled();
-            });
-
-            it("calls onRender with the layout", function() {
-                expect(onRender).toHaveBeenCalledWith(layout);
-            });
-
+        it("sets the layout title", function() {
+            expect(layout.setTitle).toHaveBeenCalledWith("Title");
         });
 
-        describe("when should NOT initialize layout AND it has already been rendered", function() {
+        it("attempts to render the page level data", function() {
+            expect(layout.renderPageLevelData).toHaveBeenCalled();
+        });
+
+    });
+
+    describe("when view does NOT have page level data", function() {
+
+        beforeEach(function() {
+            ClientRenderer.render(layout, view);
+        });
+
+        it("sets the layout title with null", function() {
+            expect(layout.setTitle).toHaveBeenCalledWith(null);
+        });
+
+        it("attempts to render the page level data", function() {
+            expect(layout.renderPageLevelData).toHaveBeenCalled();
+        });
+
+    });
+
+    describe("when layout.updateMetatagsOnClientRender is true", function() {
+
+        beforeEach(function() {
+            layout.updateMetatagsOnClientRender = true;
+
+            metatags = {
+                description: "description"
+            };
+
+            view.withMetatags(metatags);
+
+            ClientRenderer.render(layout, view);
+        });
+
+        it("sets the layout metatags", function() {
+            expect(layout.setMetaTags).toHaveBeenCalledWith(metatags);
+        });
+
+    });
+
+    describe("when layout.updateMetatagsOnClientRender is false", function() {
+
+        beforeEach(function() {
+            layout.updateMetatagsOnClientRender = false;
+
+            metatags = {
+                description: "description"
+            };
+
+            view.withMetatags(metatags);
+        });
+
+        describe("and it is the first request", function() {
 
             beforeEach(function() {
-                layout.hasBeenRendered = true;
-                ClientRenderer.render(layout, false, view, onRender, 1);
+                ClientRenderer.render(layout, view, 1);
             });
 
-            it("resets layout to normal", function() {
-                expect(layout.backToNormal).toHaveBeenCalled();
+            it("sets the layout metatags", function() {
+                expect(layout.setMetaTags).toHaveBeenCalledWith(metatags);
+            });
+        });
+
+        describe("and it is NOT the first request", function() {
+
+            beforeEach(function() {
+                ClientRenderer.render(layout, view, 2);
             });
 
-            it("calls onRender with the layout", function() {
-                expect(onRender).toHaveBeenCalledWith(layout);
+            it("does NOT set the layout metatags", function() {
+                expect(layout.setMetaTags).not.toHaveBeenCalled();
             });
-
         });
 
     });
@@ -183,7 +197,7 @@ describe("ClientRenderer", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

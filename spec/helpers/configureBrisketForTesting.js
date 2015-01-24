@@ -1,21 +1,13 @@
 "use strict";
 
-function addBrisketRequest(routeArguments, brisketRequest) {
-    // The last parameter in routeArguments is always null because
-    //  of Backbone request parsing. So here we just replace that
-    //  last parameter with the request. Developers don't usually
-    //  notice that the last parameter passed to their route handler
-    //  is null. WWARNER 08/21/2014
-    var paramsAndRequest = routeArguments;
-    paramsAndRequest[routeArguments.length - 1] = brisketRequest;
+var Testing = require("../../lib/testing/Testing");
 
-    return paramsAndRequest;
-}
-
-module.exports = addBrisketRequest;
+beforeEach(function() {
+    Testing.setup();
+});
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

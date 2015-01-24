@@ -1,6 +1,7 @@
 "use strict";
 
 var CloseableView = require("lib/traits/CloseableView");
+var HasChildViews = require("lib/traits/HasChildViews");
 var Backbone = require("lib/application/Backbone");
 var Errors = require("lib/errors/Errors");
 var _ = require("underscore");
@@ -40,17 +41,79 @@ describe("CloseableView", function() {
             expect(view.onClose).toHaveBeenCalled();
         });
 
+        describe("when the view does NOT extend HasChildViews", function() {
+
+            beforeEach(function() {
+                view = new ViewThatCloses();
+            });
+
+            it("does NOT have the method hasChildViews", function() {
+                expect(view.hasChildViews).not.toBeDefined();
+            });
+
+        });
+
+        describe("when the view extends HasChildViews", function() {
+
+            beforeEach(function() {
+                var ParentView = ViewThatCloses.extend(HasChildViews);
+                view = new ParentView();
+                spyOn(view, "closeChildViews").and.callThrough();
+            });
+
+            describe("when the view has child views", function() {
+
+                beforeEach(function() {
+                    view.createChildView(ViewThatCloses);
+                });
+
+                it("ensures that all child views will be closed", function() {
+                    view.close();
+
+                    expect(view.closeChildViews).toHaveBeenCalled();
+                });
+
+                describe("when closeChildViews was called explicitly", function() {
+
+                    beforeEach(function() {
+                        view.closeChildViews();
+                    });
+
+                    it("avoids calling closeChildViews again", function() {
+                        view.close();
+
+                        expect(view.closeChildViews.calls.count()).toBe(1);
+                    });
+
+                });
+
+            });
+
+            describe("when the view does NOT have any child view", function() {
+
+                beforeEach(function() {
+                    view.close();
+                });
+
+                it("does NOT call closeChildViews", function() {
+                    expect(view.closeChildViews).not.toHaveBeenCalled();
+                });
+
+            });
+
+        });
+
         describe("when there is an error in onClose", function() {
 
             var error;
 
             beforeEach(function() {
                 error = new Error();
-                view.onClose.andCallFake(function() {
+                view.onClose.and.callFake(function() {
                     throw error;
                 });
 
-                spyOn(Errors, "log");
+                spyOn(Errors, "notify");
 
                 view.close();
             });
@@ -64,7 +127,7 @@ describe("CloseableView", function() {
             });
 
             it("reports the error to the console", function() {
-                expect(Errors.log).toHaveBeenCalledWith(error);
+                expect(Errors.notify).toHaveBeenCalledWith(error);
             });
 
         });
@@ -122,11 +185,11 @@ describe("CloseableView", function() {
 
             beforeEach(function() {
                 error = new Error();
-                view.onClose.andCallFake(function() {
+                view.onClose.and.callFake(function() {
                     throw error;
                 });
 
-                spyOn(Errors, "log");
+                spyOn(Errors, "notify");
 
                 view.closeAsChild();
             });
@@ -140,7 +203,7 @@ describe("CloseableView", function() {
             });
 
             it("reports the error to the console", function() {
-                expect(Errors.log).toHaveBeenCalledWith(error);
+                expect(Errors.notify).toHaveBeenCalledWith(error);
             });
 
             it("stops listening to new events", function() {
@@ -154,7 +217,7 @@ describe("CloseableView", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

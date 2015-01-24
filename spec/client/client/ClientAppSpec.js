@@ -53,7 +53,7 @@ describe("ClientApp", function() {
         });
 
         it("sets up links and push state with appRoot from configuration", function() {
-            expect(SetupLinksAndPushState.start.mostRecentCall.args[0])
+            expect(SetupLinksAndPushState.start.calls.mostRecent().args[0])
                 .toHaveKeyValue("root", "/appRoot");
         });
 
@@ -66,7 +66,7 @@ describe("ClientApp", function() {
         });
 
         it("sets up links and push state with appRoot from configuration", function() {
-            expect(SetupLinksAndPushState.start.mostRecentCall.args[0])
+            expect(SetupLinksAndPushState.start.calls.mostRecent().args[0])
                 .toHaveKeyValue("root", "");
         });
 
@@ -75,12 +75,12 @@ describe("ClientApp", function() {
     describe("when push state is available", function() {
 
         beforeEach(function() {
-            spyOn(clientApp, "isPushStateAvailable").andReturn(true);
+            spyOn(clientApp, "isPushStateAvailable").and.returnValue(true);
             clientApp.start();
         });
 
         it("sets up links and push state with appRoot from configuration", function() {
-            expect(SetupLinksAndPushState.start.mostRecentCall.args[0])
+            expect(SetupLinksAndPushState.start.calls.mostRecent().args[0])
                 .toHaveKeyValue("pushState", true);
         });
 
@@ -89,12 +89,12 @@ describe("ClientApp", function() {
     describe("when push state is NOT available", function() {
 
         beforeEach(function() {
-            spyOn(clientApp, "isPushStateAvailable").andReturn(false);
+            spyOn(clientApp, "isPushStateAvailable").and.returnValue(false);
             clientApp.start();
         });
 
         it("sets up links and push state with appRoot from configuration", function() {
-            expect(SetupLinksAndPushState.start.mostRecentCall.args[0])
+            expect(SetupLinksAndPushState.start.calls.mostRecent().args[0])
                 .toHaveKeyValue("pushState", false);
         });
 
@@ -102,7 +102,7 @@ describe("ClientApp", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

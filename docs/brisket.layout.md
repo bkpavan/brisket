@@ -22,7 +22,7 @@ var Layout = Brisket.Layout.extend();
 This layout will not actually create a very useful page - it will be a blank screen for the user. Let's add a template.
 
 ### The Layout Template
-A Layout is an implementation of [Brisket.View](brisket.view.md). Therefore, specifying a template for a layout is the same as for a view - [set up a templating engine](brisket.view.md#setting-a-templating-engine) and add a template. For this example, we'll use the built in [StringTemplateAdapter](#brisket.templating.stringtemplateadapter.md):
+A Layout is an implementation of [Brisket.View](brisket.view.md). Therefore, specifying a template for a layout is the same as for a view - [set up a templating engine](brisket.view.md#setting-a-templating-engine) and add a template. For this example, we'll use the built in [StringTemplateAdapter](brisket.templating.stringtemplateadapter.md):
 
 ```js
 var Layout = Brisket.Layout.extend({
@@ -73,28 +73,31 @@ Now every page's page title will be 'My first Brisket app' unless you set a cust
 You will likely want to expose some data from your [environmentConfig](brisket.createserver.md#environmentConfig) to the Layout template. The `environmentConfig` will be accessible to your Layout's methods as `this.environmentConfig`. Expose the environmentConfig through the logic method ([read here for more details](brisket.view.md#exposing-data-to-a-template)).
 
 ```js
-var templates = {
-    'layout': new Hogan.Template(...)
-    // actual template is
-    //  <!DOCTYPE html>
-    //  <html>
-    //  <head>
-    //    <title>My first Brisket app</title>
-    //  </head>
-    //  <body>
-    //    <main class="main-content"><!-- Views go here --></main>
-    //    <div class="environment-some-data">
-    //      {{environmentConfig.some}}
-    //    </div>
-    //  </body>
-    //  </html>
-};
+
+var MustacheTemplateAdapter = TemplateAdapter.extend({
+
+    templateToHTML: function(template, data, partials) {
+        return Mustache.render(template, data, partials);
+    }
+
+});
 
 var Layout = Brisket.Layout.extend({
 
-    templateAdapter: Brisket.Templating.compiledHoganTemplateAdapter(templates),
+    templateAdapter: MustacheTemplateAdapter,
 
-    template: 'layout',
+    template: '<!DOCTYPE html> \
+        <html> \
+        <head> \
+            <title>My first Brisket app</title>
+        </head> \
+        <body> \
+            <main class="main-content"><!-- Views go here --></main> \
+            <div class="environment-some-data"> \
+                {{environmentConfig.some}} \
+            </div> \
+        </body> \
+        </html>',
 
     content: '.main-content',
 
@@ -113,22 +116,13 @@ The template will display the value "data" if environmentConfig is `{ "some": "d
 If your layout's display depends on data fetched from an API, implement the `fetchData` method. The return value of your implementation should be a promise. Here's an example:
 
 ```js
-var templates = {
-    'layout': new Hogan.Template(...)
-    // actual template is
-    //  <!DOCTYPE html>
-    //  <html>
-    //  <head>
-    //    <title>My first Brisket app</title>
-    //  </head>
-    //  <body>
-    //    <main class="main-content"><!-- Views go here --></main>
-    //    <div class="model-data">
-    //      {{model.some}}
-    //    </div>
-    //  </body>
-    //  </html>
-};
+var MustacheTemplateAdapter = TemplateAdapter.extend({
+
+    templateToHTML: function(template, data, partials) {
+        return Mustache.render(template, data, partials);
+    }
+
+});
 
 var Model = Brisket.Model.extend({
     url: '/api/model' // returns { some: "modeldata" }
@@ -136,9 +130,20 @@ var Model = Brisket.Model.extend({
 
 var Layout = Brisket.Layout.extend({
 
-    templateAdapter: Brisket.Templating.compiledHoganTemplateAdapter(templates),
+    templateAdapter: MustacheTemplateAdapter,
 
-    template: 'layout',
+    template: '<!DOCTYPE html> \
+        <html> \
+        <head> \
+            <title>My first Brisket app</title>
+        </head> \
+        <body> \
+            <main class="main-content"><!-- Views go here --></main> \
+            <div class="environment-some-data"> \
+                {{model.some}} \
+            </div> \
+        </body> \
+        </html>',
 
     content: '.main-content',
 
@@ -166,13 +171,21 @@ var Layout = Brisket.Layout.extend({
 `fetchData` will be called before the Layout is rendered so the data in `this.model` will be ready for the Layout's template. **Note:** If the promise returned by `fetchData` is rejected, the page will show an error even if the current route executes successfully. Always return a resolved promise to avoid the Layout causing your pages to display errors.
 
 ## Getting Back to Normal
-As you navigate between routes, your Router code may modify the Layout. Implement a `backToNormal` method on your Layout to tell Brisket what the default state of your Layout looks like.
+As you navigate between routes, your route handlers may modify the Layout. Implement a `backToNormal` method on your Layout to tell Brisket what the default state of your Layout looks like.
 
 ```js
+var SomeView = Brisket.View.extend();
+
 var SpecialRouter = Brisket.RouterBrewery.create({
 
-    onRender: function(layout) {
+    routes: {
+        "special": "handleSpecial"
+    },
+
+    handleSpecial: function(layout) {
         layout.beSpecial();
+
+        return SomeView();
     }
 
 });
@@ -208,6 +221,4 @@ var Layout = Brisket.Layout.extend({
 });
 ```
 
-In this example, when you go to any route in SpecialRouter, the layout will become special. When you navigate to a route that is outside of SpecialRouter, you want the layout to be normal. You also don't want to implement an `onRender` for every Router. `backToNormal` will execute before every route so that the layout is normal before doing an Router-specific work.
-
-Using `backToNormal` plus `onRender`, you can do things like highlight the current menu item, update the logo between Routers, etc.
+In this example, when you go to any route in SpecialRouter, the layout will become special. When you navigate to a route that is outside of SpecialRouter, the layout should be normal. `backToNormal` executes before every route so that the layout is normal before doing any route-specific work.

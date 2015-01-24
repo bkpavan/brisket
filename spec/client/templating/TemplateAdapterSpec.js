@@ -10,7 +10,7 @@ describe("TemplateAdapter", function() {
     it("can be extended", function() {
         ExampleTemplateAdapter = TemplateAdapter.extend();
 
-        expect(TemplateAdapter.isPrototypeOf(ExampleTemplateAdapter));
+        expect(TemplateAdapter.isPrototypeOf(ExampleTemplateAdapter)).toBe(true);
     });
 
     it("can be extended with custom properties", function() {
@@ -39,14 +39,14 @@ describe("TemplateAdapter", function() {
         ExampleTemplateAdapter = TemplateAdapter.extend();
         NthTemplateAdapter = ExampleTemplateAdapter.extend();
 
-        expect(ExampleTemplateAdapter.isPrototypeOf(NthTemplateAdapter));
-        expect(TemplateAdapter.isPrototypeOf(NthTemplateAdapter));
+        expect(ExampleTemplateAdapter.isPrototypeOf(NthTemplateAdapter)).toBe(true);
+        expect(TemplateAdapter.isPrototypeOf(NthTemplateAdapter)).toBe(true);
     });
 
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

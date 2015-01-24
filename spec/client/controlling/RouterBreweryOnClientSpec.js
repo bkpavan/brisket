@@ -10,7 +10,7 @@ describe("RouterBrewery on client", function() {
     var router;
 
     beforeEach(function() {
-        spyOn(Environment, "isServer").andReturn(false);
+        spyOn(Environment, "isServer").and.returnValue(false);
     });
 
     describe("#create", function() {
@@ -30,22 +30,6 @@ describe("RouterBrewery on client", function() {
 
             expect(router instanceof Backbone.Router).toBe(true);
         });
-
-        forEach({
-            "a string": "some string",
-            "is falsy": null,
-            "is an object": {},
-            "is a number": 1
-        })
-            .it("throws an error when onRender is {{not a function}}", function(onRender) {
-                var creatingRouterWithoutValidOnRender = function() {
-                    RouterBrewery.create({
-                        onRender: onRender
-                    });
-                };
-
-                expect(creatingRouterWithoutValidOnRender).toThrow();
-            });
 
     });
 
@@ -99,7 +83,7 @@ describe("RouterBrewery on client", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

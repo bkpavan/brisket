@@ -31,17 +31,17 @@ describe("CloseableRouter", function() {
 
             beforeEach(function() {
                 error = new Error();
-                router.onClose.andCallFake(function() {
+                router.onClose.and.callFake(function() {
                     throw error;
                 });
 
-                spyOn(Errors, "log");
+                spyOn(Errors, "notify");
 
                 router.close();
             });
 
             it("reports the error to the console", function() {
-                expect(Errors.log).toHaveBeenCalledWith(error);
+                expect(Errors.notify).toHaveBeenCalledWith(error);
             });
 
         });
@@ -51,7 +51,7 @@ describe("CloseableRouter", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

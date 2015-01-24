@@ -1,10 +1,8 @@
 "use strict";
 
-var Backbone = require("lib/application/Backbone");
-var View = require("lib/viewing/View");
-var ViewRelationship = require("lib/viewing/ViewRelationship");
-
 describe("ViewRelationshipSpec", function() {
+    var View = require("lib/viewing/View");
+    var ViewRelationship = require("lib/viewing/ViewRelationship");
 
     var ChildView;
     var childView;
@@ -19,7 +17,7 @@ describe("ViewRelationshipSpec", function() {
                 "<div class='last'></div>"
         });
         parentView = new ParentView();
-        ChildView = Backbone.View.extend();
+        ChildView = View.extend();
         viewRelationship = new ViewRelationship(ChildView, parentView);
     });
 
@@ -129,31 +127,46 @@ describe("ViewRelationshipSpec", function() {
 
             });
 
-            describe("when parent view is in the DOM", function() {
+        });
 
-                beforeEach(function() {
-                    parentView.render();
-                    parentView.enterDOM();
-                    viewRelationship.andPlace(".destination", "append");
-                });
+    });
 
-                it("enters the child view into the DOM", function() {
-                    expect(viewRelationship.enterDOM).toHaveBeenCalled();
-                });
+    describe("#enterDOM", function() {
 
+        describe("when child view CANNOT enter DOM", function() {
+
+            beforeEach(function() {
+                ChildView.prototype.enterDOM = null;
             });
 
-            describe("when parent view is NOT in the DOM", function() {
+            it("does NOT error attempting to enter the child view into the DOM", function() {
+                function enteringDOMWhenViewCant() {
+                    viewRelationship.andAppendIt();
+                }
 
-                beforeEach(function() {
-                    viewRelationship.andPlace(".destination", "append");
-                });
-
-                it("does NOT enter the child view into the DOM", function() {
-                    expect(viewRelationship.enterDOM).not.toHaveBeenCalled();
-                });
-
+                expect(enteringDOMWhenViewCant).not.toThrow();
             });
+
+        });
+
+        describe("when child view CAN enter DOM", function() {
+
+            beforeEach(function() {
+                spyOn(ChildView.prototype, "enterDOM");
+            });
+
+            it("enters the child view into the DOM when parentView is NOT in DOM", function() {
+                parentView.render();
+                parentView.enterDOM();
+                viewRelationship.andAppendIt();
+                expect(ChildView.prototype.enterDOM).toHaveBeenCalled();
+            });
+
+            it("enters the child view into the DOM when parentView is NOT in DOM", function() {
+                viewRelationship.andAppendIt();
+                expect(ChildView.prototype.enterDOM).not.toHaveBeenCalled();
+            });
+
         });
 
     });
@@ -173,19 +186,19 @@ describe("ViewRelationshipSpec", function() {
             it("appends a child view", function() {
                 parentView.createChildView(childView).andAppendIt();
 
-                expect($lastElement().next()).toBe(childView.el);
+                expect($lastElement().next()).$toBe(childView.el);
             });
 
             it("inserts a child view into a descendant element", function() {
                 parentView.createChildView(childView).andInsertInto(".descendant");
 
-                expect($descendantElement().children()).toBe(childView.$el);
+                expect($descendantElement().children()).$toBe(childView.$el);
             });
 
             it("inserts a child view after a descendant element", function() {
                 parentView.createChildView(childView).andInsertAfter(".descendant");
 
-                expect($descendantElement().next()).toBe(childView.$el);
+                expect($descendantElement().next()).$toBe(childView.$el);
             });
 
             it("replaces a descendant element with a child view", function() {
@@ -195,20 +208,20 @@ describe("ViewRelationshipSpec", function() {
                 parentView.createChildView(childView).andReplace(".descendant");
 
                 expect($descendantElement()).not.toExist();
-                expect(childView.$el.nextAll()).toBe($descendantElementNext);
-                expect(childView.$el.prevAll()).toBe($descendantElementPrev);
+                expect(childView.$el.nextAll()).$toBe($descendantElementNext);
+                expect(childView.$el.prevAll()).$toBe($descendantElementPrev);
             });
 
             it("appends a child view to a descendant element", function() {
                 $descendantElement().append("<div class='some_element' />");
                 parentView.createChildView(childView).andAppendItTo(".descendant");
-                expect($descendantElement().children().last()).toBe(childView.$el);
+                expect($descendantElement().children().last()).$toBe(childView.$el);
             });
 
             it("prepends a descendant element with a child view", function() {
                 $descendantElement().append("<div class='some_element' />");
                 parentView.createChildView(childView).andPrependItTo(".descendant");
-                expect($descendantElement().children().first()).toBe(childView.$el);
+                expect($descendantElement().children().first()).$toBe(childView.$el);
             });
 
         });
@@ -234,7 +247,7 @@ describe("ViewRelationshipSpec", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

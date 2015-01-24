@@ -36,39 +36,43 @@ describe("BootstrappedDataService", function() {
                 bootstrappedDataService = new BootstrappedDataService(bootstrappedData);
             });
 
-            it("mocks out the next ajax call which will happen when sync completes", function() {
+            it("mocks out the next ajax call which will happen when sync completes", function(done) {
                 bootstrappedDataService.checkAlreadyHasData(method, model, options);
 
-                wait("for ajax call to complete").until(ajaxRequestModelData())
-                    .then(function(data) {
-                        expect(data).toEqual({
-                            "some": "data"
-                        });
+                ajaxRequestModelData().then(function(data) {
+                    expect(data).toEqual({
+                        "some": "data"
                     });
+
+                    done();
+                });
             });
 
             describe("when data is requested twice", function() {
 
                 var fetchingTwice;
 
-                it("does NOT mock the second request", function() {
+                it("does NOT mock the second request", function(done) {
                     bootstrappedDataService.checkAlreadyHasData(method, model, options);
 
-                    fetchingTwice = function() {
-                        return ajaxRequestModelData()
-                            .then(function() {
-                                bootstrappedDataService.checkAlreadyHasData(method, model, options);
+                    fetchingTwice = ajaxRequestModelData()
+                        .then(function() {
+                            bootstrappedDataService.checkAlreadyHasData(method, model, options);
 
-                                return ajaxRequestModelData();
-                            });
-                    };
-
-                    wait("for ajax call to complete").until(fetchingTwice())
-                        .then(function(data) {
-                            expect(data).not.toEqual({
-                                "some": "data"
-                            });
+                            return ajaxRequestModelData();
                         });
+
+                    // using always because this is a jquery promise AND it fails on the second
+                    //  call since an ajax call to /url in the tests won't succeed. this
+                    //  expectation only cares that the mock data is NOT returned again so that's ok.
+                    //  wawjr3d 10/17/2014
+                    fetchingTwice.always(function(data) {
+                        expect(data).not.toEqual({
+                            "some": "data"
+                        });
+
+                        done();
+                    });
                 });
 
             });
@@ -81,15 +85,17 @@ describe("BootstrappedDataService", function() {
                 bootstrappedDataService = new BootstrappedDataService();
             });
 
-            it("does NOT mock ajax request", function() {
+            it("does NOT mock ajax request", function(done) {
                 bootstrappedDataService.checkAlreadyHasData(method, model, options);
 
-                wait("for ajax call to complete").until(ajaxRequestModelData())
-                    .then(function(data) {
-                        expect(data).not.toEqual({
-                            "some": "data"
-                        });
+                ajaxRequestModelData().always(function(data) {
+                    expect(data).not.toEqual({
+                        "some": "data"
                     });
+
+                    done();
+                });
+
             });
 
         });
@@ -106,7 +112,7 @@ describe("BootstrappedDataService", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

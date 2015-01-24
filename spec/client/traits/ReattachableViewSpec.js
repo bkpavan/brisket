@@ -20,7 +20,6 @@ describe("ReattachableView", function() {
             ).appendTo("body");
 
             ViewThatReattaches = Backbone.View.extend(ReattachableView);
-
             view = new ViewThatReattaches();
         });
 
@@ -35,11 +34,11 @@ describe("ReattachableView", function() {
             });
 
             it("reattaches view to element", function() {
-                expect(view.$el).not.toBe(".view-that-was-in-dom");
+                expect(view.$el).not.$toBe(".view-that-was-in-dom");
 
                 view.reattach();
 
-                expect(view.$el).toBe(".view-that-was-in-dom");
+                expect(view.$el).$toBe(".view-that-was-in-dom");
                 expect(view.$el).toBeAttachedToDom();
             });
 
@@ -54,7 +53,7 @@ describe("ReattachableView", function() {
             it("reattaches view to element", function() {
                 view.reattach();
 
-                expect(view.$el).not.toBe(".view-that-was-in-dom");
+                expect(view.$el).not.$toBe(".view-that-was-in-dom");
                 expect(view.$el).not.toBeAttachedToDom();
             });
 
@@ -132,7 +131,7 @@ describe("ReattachableView", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

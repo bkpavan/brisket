@@ -1,12 +1,12 @@
 "use strict";
 
 var Layout = require("lib/viewing/Layout");
+var Metatags = require("lib/metatags/Metatags");
 
 describe("Layout", function() {
 
     var ExampleLayout;
     var layout;
-    var onRender;
 
     describe("#asHtml", function() {
 
@@ -151,78 +151,169 @@ describe("Layout", function() {
 
     });
 
-    describe("#setExtraRenderInstructions", function() {
+    describe("#renderPageLevelData", function() {
+
+        var layout;
+        var shouldRenderMetaTags;
 
         beforeEach(function() {
-            spyOn(layout, "executeExtraRenderInstructions");
-            onRender = jasmine.createSpy();
+            layout = new Layout();
+            spyOn(layout, "renderPageTitle");
+            spyOn(layout, "renderMetaTags");
         });
 
-        forEach({
-            "a string": "some string",
-            "a number": 1,
-            "falsy": null
-        })
-            .it("sets extraRenderInstructions to be null when onRender is {{NOT a function}}", function(onRender) {
-                layout.setExtraRenderInstructions(onRender);
-                expect(layout.extraRenderInstructions).toBeNull();
-            });
-
-        describe("when layout has been rendered", function() {
+        describe("when shouldRenderMetaTags is true", function() {
 
             beforeEach(function() {
-                layout.hasBeenRendered = true;
-                layout.setExtraRenderInstructions(onRender);
+                shouldRenderMetaTags = true;
+                layout.renderPageLevelData(shouldRenderMetaTags);
             });
 
-            it("calls executeExtraRenderInstructions", function() {
-                expect(layout.executeExtraRenderInstructions).toHaveBeenCalled();
+            it("renders page title", function() {
+                expect(layout.renderPageTitle).toHaveBeenCalled();
+            });
+
+            it("renders metatags", function() {
+                expect(layout.renderMetaTags).toHaveBeenCalled();
             });
 
         });
 
-        describe("when layout has NOT been rendered", function() {
+        describe("when shouldRenderMetaTags is false", function() {
 
             beforeEach(function() {
-                layout.hasBeenRendered = false;
-                layout.setExtraRenderInstructions(onRender);
+                shouldRenderMetaTags = false;
+                layout.renderPageLevelData(shouldRenderMetaTags);
             });
 
-            it("does NOT call executeExtraRenderInstructions", function() {
-                expect(layout.executeExtraRenderInstructions).not.toHaveBeenCalled();
+            it("renders page title", function() {
+                expect(layout.renderPageTitle).toHaveBeenCalled();
+            });
+
+            it("does not render metatags", function() {
+                expect(layout.renderMetaTags).not.toHaveBeenCalled();
             });
 
         });
 
     });
 
-    describe("#executeExtraRenderInstructions", function() {
+    describe("#renderMetaTags", function() {
 
-        describe("when layout has extra render instructions", function() {
+        var metatags;
+        var renderedMetatags;
 
-            beforeEach(function() {
-                layout.extraRenderInstructions = jasmine.createSpy();
-                layout.executeExtraRenderInstructions();
+        beforeEach(function() {
+            ExampleLayout = Layout.extend({
+                template: "<!doctype html>\n<html><head></head></html>"
             });
 
-            it("calls the extraRenderInstructions with layout", function() {
-                expect(layout.extraRenderInstructions).toHaveBeenCalledWith(layout);
+            layout = new ExampleLayout();
+
+            spyOn(layout, "createChildView").and.callThrough();
+        });
+
+        describe("when there is no metatags", function() {
+
+            beforeEach(function() {
+                layout.metatags = null;
+                layout.renderMetaTags();
+            });
+
+            it("does nothing", function() {
+                expect(layout.createChildView).not.toHaveBeenCalled();
             });
 
         });
 
-        describe("when layout does NOT have extra render instructions", function() {
+        describe("when there are metatags but no renderedMetatags", function() {
 
             beforeEach(function() {
-                layout.extraRenderInstructions = null;
+                metatags = new Metatags({
+                    "description": "meta description",
+                    "og:image": "example-url/image.jpg",
+                    "canonical": "canonical-link.com/example-path"
+                });
+
+                layout.renderedMetatags = null;
+
+                layout.metatags = metatags;
+
+                layout.renderMetaTags();
             });
 
-            it("does not throw an error attempting to call extra render instructions", function() {
-                var executingExtraRenderInstructionsWithoutInstructions = function() {
-                    layout.executeExtraRenderInstructions();
+            it("creates all the tag views", function() {
+                expect(metatags.tagViews.length).toBe(3);
+            });
+
+            it("sets the renderedMetatags", function() {
+                expect(layout.renderedMetatags).toEqual(metatags);
+            });
+
+        });
+
+        describe("when both metatags and renderedMetatags exist", function() {
+
+            var pairs;
+
+            beforeEach(function() {
+                pairs = {
+                    "description": "meta description",
+                    "og:image": "example-url/image.jpg",
+                    "canonical": "canonical-link.com/example-path"
                 };
 
-                expect(executingExtraRenderInstructionsWithoutInstructions).not.toThrow();
+                metatags = new Metatags(pairs);
+
+                layout.metatags = metatags;
+
+                spyOn(metatags, "createTagViews").and.callThrough();
+            });
+
+            describe("they are the same", function() {
+
+                beforeEach(function() {
+                    renderedMetatags = new Metatags(pairs);
+
+                    spyOn(renderedMetatags, "closeTagViews").and.callThrough();
+
+                    layout.renderedMetatags = renderedMetatags;
+                    layout.renderMetaTags();
+                });
+
+                it("avoids rendering again", function() {
+                    expect(renderedMetatags.closeTagViews).not.toHaveBeenCalled();
+                    expect(metatags.createTagViews).not.toHaveBeenCalled();
+                });
+
+            });
+
+            describe("they are the different", function() {
+
+                beforeEach(function() {
+                    renderedMetatags = new Metatags({
+                        "description": "another meta description"
+                    });
+
+                    spyOn(renderedMetatags, "closeTagViews").and.callThrough();
+
+                    layout.renderedMetatags = renderedMetatags;
+                    layout.renderMetaTags();
+                });
+
+                it("closes tagViews for renderedMetatags", function() {
+                    expect(renderedMetatags.closeTagViews).toHaveBeenCalled();
+                });
+
+                it("creates new tagViews", function() {
+                    expect(metatags.createTagViews).toHaveBeenCalled();
+                    expect(metatags.tagViews.length).toBe(3);
+                });
+
+                it("sets the renderedMetatags", function() {
+                    expect(layout.renderedMetatags).toBe(metatags);
+                });
+
             });
 
         });
@@ -232,7 +323,7 @@ describe("Layout", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

@@ -5,11 +5,11 @@ var Environment = require("lib/environment/Environment");
 describe("Environment", function() {
 
     it("can be fully mocked out by just setting isServer", function() {
-        spyOn(Environment, "isServer").andReturn(true);
+        spyOn(Environment, "isServer").and.returnValue(true);
         expect(Environment.isServer()).toBe(true);
         expect(Environment.isClient()).toBe(false);
 
-        Environment.isServer.andReturn(false);
+        Environment.isServer.and.returnValue(false);
         expect(Environment.isServer()).toBe(false);
         expect(Environment.isClient()).toBe(true);
     });
@@ -17,7 +17,7 @@ describe("Environment", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

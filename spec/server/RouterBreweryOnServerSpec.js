@@ -1,16 +1,15 @@
 "use strict";
 
-var RouterBrewery = require("../../lib/controlling/RouterBrewery");
-var Environment = require("../../lib/environment/Environment");
-var ServerRouter = require("../../lib/server/ServerRouter");
-
 describe("RouterBrewery on server", function() {
+    var RouterBrewery = require("../../lib/controlling/RouterBrewery");
+    var Environment = require("../../lib/environment/Environment");
+    var ServerRouter = require("../../lib/server/ServerRouter");
 
     var ExampleRouter;
     var router;
 
     beforeEach(function() {
-        spyOn(Environment, "isServer").andReturn(true);
+        spyOn(Environment, "isServer").and.returnValue(true);
     });
 
     it("creates ServerRouters", function() {
@@ -27,7 +26,7 @@ describe("RouterBrewery on server", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

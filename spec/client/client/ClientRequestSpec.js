@@ -1,10 +1,15 @@
 "use strict";
 
-var ClientRequest = require("lib/client/ClientRequest");
-
 describe("ClientRequest", function() {
+    var ClientRequest = require("lib/client/ClientRequest");
+    var mockWindow = require("mock/mockWindow");
+
     var clientRequest;
     var requestId;
+
+    afterEach(function() {
+        ClientRequest.reset();
+    });
 
     describe("from returns Brisket normalized values", function() {
 
@@ -35,6 +40,10 @@ describe("ClientRequest", function() {
                     param: "value"
                 }
             });
+        });
+
+        it("exposes request raw query", function() {
+            expect(clientRequest.rawQuery).toEqual("some=param&another%5Bparam%5D=value");
         });
 
         it("exposes the referrer", function() {
@@ -110,29 +119,36 @@ describe("ClientRequest", function() {
 
         });
 
-    });
+        describe("environmentConfig", function() {
 
-    function mockWindow() {
-        return {
-            document: {
-                referrer: "theReferrer"
-            },
-            location: {
-                protocol: "http:",
-                host: "example.com:8080",
-                pathname: "/requested/path",
-                search: "?some=param&another[param]=value"
-            },
-            navigator: {
-                userAgent: "A wonderful computer"
-            }
-        };
-    }
+            it("exposes environmentConfig when environmentConfig has been set", function() {
+                ClientRequest.setEnvironmentConfig({
+                    "a": "b",
+                    "c": "d"
+                });
+
+                clientRequest = ClientRequest.from(mockWindow());
+
+                expect(clientRequest.environmentConfig).toEqual({
+                    "a": "b",
+                    "c": "d"
+                });
+            });
+
+            it("exposes empty environmentConfig when environmentConfig has NOT been set", function() {
+                clientRequest = ClientRequest.from(mockWindow());
+
+                expect(clientRequest.environmentConfig).toEqual({});
+            });
+
+        });
+
+    });
 
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

@@ -15,10 +15,6 @@ describe("ServerRequest", function() {
             expect(serverRequest.protocol).toBe("http");
         });
 
-        it("exposes path", function() {
-            expect(serverRequest.path).toBe("/requested/path");
-        });
-
         it("exposes full host with port", function() {
             expect(serverRequest.host).toBe("example.com:8080");
         });
@@ -34,6 +30,16 @@ describe("ServerRequest", function() {
                     param: "value"
                 }
             });
+        });
+
+        it("exposes request raw query", function() {
+            expect(serverRequest.rawQuery).toEqual("some=param&another%5Bparam%5D=value");
+        });
+
+        it("exposes request with no query params", function() {
+            var serverRequestNoQueryParam = ServerRequest.from(mockExpressRequestNoQueryParam());
+            expect(serverRequestNoQueryParam.rawQuery).toEqual(null);
+            expect(serverRequestNoQueryParam.query).toEqual(undefined);
         });
 
         it("exposes the referrer", function() {
@@ -54,6 +60,58 @@ describe("ServerRequest", function() {
 
     });
 
+    describe("environmentConfig", function() {
+
+        it("exposes environmentConfig when created WITH one", function() {
+            serverRequest = ServerRequest.from(mockExpressRequest(), {
+                "a": "b",
+                "c": "d"
+            });
+
+            expect(serverRequest.environmentConfig).toEqual({
+                "a": "b",
+                "c": "d"
+            });
+        });
+
+        it("exposes empty environmentConfig when created WITHOUT one", function() {
+            serverRequest = ServerRequest.from(mockExpressRequest());
+
+            expect(serverRequest.environmentConfig).toEqual({});
+        });
+
+    });
+
+    describe("path", function() {
+
+        describe("when environmentConfig has appRoot", function() {
+
+            beforeEach(function() {
+                serverRequest = ServerRequest.from(mockExpressRequest(), {
+                    appRoot: "/appRoot"
+                });
+            });
+
+            it("exposes path", function() {
+                expect(serverRequest.path).toBe("/appRoot/requested/path");
+            });
+
+        });
+
+        describe("when environmentConfig does NOT have appRoot", function() {
+
+            beforeEach(function() {
+                serverRequest = ServerRequest.from(mockExpressRequest(), {});
+            });
+
+            it("exposes path", function() {
+                expect(serverRequest.path).toBe("/requested/path");
+            });
+
+        });
+
+    });
+
     function mockExpressRequest() {
         return {
             protocol: "http",
@@ -69,14 +127,29 @@ describe("ServerRequest", function() {
                 another: {
                     param: "value"
                 }
-            }
+            },
+            originalUrl: "/requested/path?some=param&another%5Bparam%5D=value"
+        };
+    }
+
+    function mockExpressRequestNoQueryParam() {
+        return {
+            protocol: "http",
+            path: "/requested/path",
+            host: "example.com",
+            headers: {
+                "host": "example.com:8080",
+                "referer": "theReferrer.com",
+                "user-agent": "A wonderful computer"
+            },
+            originalUrl: "/requested/path"
         };
     }
 
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

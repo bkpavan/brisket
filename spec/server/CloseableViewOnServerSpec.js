@@ -15,7 +15,7 @@ describe("closing CloseableView on server", function() {
         beforeEach(function() {
             Backbone.$ = $;
 
-            spyOn(Environment, "isServer").andReturn(true);
+            spyOn(Environment, "isServer").and.returnValue(true);
 
             ViewThatCloses = Backbone.View.extend(_.extend({}, CloseableView));
             view = new ViewThatCloses();
@@ -37,7 +37,7 @@ describe("closing CloseableView on server", function() {
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

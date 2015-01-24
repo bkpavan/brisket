@@ -44,10 +44,6 @@ describe("public interface to Brisket", function() {
         expect(Brisket.Templating.StringTemplateAdapter).toBe(requireFromLib("templating/StringTemplateAdapter"));
     });
 
-    it("exposes Brisket.Templating.compiledHoganTemplateAdapter", function() {
-        expect(Brisket.Templating.compiledHoganTemplateAdapter).toBe(requireFromLib("templating/compiledHoganTemplateAdapter"));
-    });
-
     it("exposes Brisket.ServerApp", function() {
         expect(Brisket.ServerApp).toBe(requireFromLib("server/ServerApp"));
     });
@@ -64,10 +60,6 @@ describe("public interface to Brisket", function() {
         expect(Brisket.createServer).toBe(requireFromLib("server/Server").create);
     });
 
-    it("exposes Brisket.Layout.Metatags", function() {
-        expect(Brisket.Layout.Metatags).toBe(requireFromLib("metatags/Metatags"));
-    });
-
     it("exposes Backbone as Brisket.Backbone", function() {
         expect(Brisket.Backbone).toBe(requireFromLib("application/Backbone"));
     });
@@ -76,13 +68,17 @@ describe("public interface to Brisket", function() {
         expect(Brisket.$).toBe(requireFromLib("application/jquery"));
     });
 
+    it("exposes Brisket.onError", function() {
+        expect(Brisket.onError).toBe(requireFromLib("errors/Errors").onError);
+    });
+
     function requireFromLib(path) {
         return require("../../lib/" + path);
     }
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

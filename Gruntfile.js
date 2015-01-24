@@ -1,53 +1,44 @@
 "use strict";
 
-var configureGrunt = function(grunt) {
+var spawn = require('child_process').spawn;
 
-    grunt.loadNpmTasks("grunt-contrib-jshint");
+function configureGrunt(grunt) {
+
     grunt.loadNpmTasks("grunt-browserify");
     grunt.loadNpmTasks("grunt-contrib-jasmine");
-    grunt.loadNpmTasks("grunt-jasmine-node");
+    grunt.loadNpmTasks("grunt-contrib-jshint");
 
     grunt.initConfig({
 
         pkg: grunt.file.readJSON("package.json"),
 
-        jshint: {
-            files: [
-                "lib/**/*.js",
-                "spec/**/*.js",
-                "!spec/build/*.js"
-            ],
-            options: {
-                jshintrc: true
-            }
-        },
-
         browserify: {
-
             test: {
-
                 src: [
-                    "lib/**/*.js"
+                    "lib/**/*.js",
+                    "spec/helpers/**/*.js"
                 ],
                 dest: "spec/build/lib.js",
                 options: {
                     alias: [
                         "node_modules/backbone/backbone.js:backbone",
                         "node_modules/underscore/underscore.js:underscore",
-                        "node_modules/bluebird/zalgo.js:bluebird",
+                        "node_modules/bluebird/js/main/bluebird.js:bluebird",
                         "node_modules/jquery/dist/jquery.js:jquery"
                     ],
                     ignore: [
                         "lib/server/**/*.js",
                         "lib/brisket.js"
                     ],
-                    aliasMappings: [
-                        {
-                            cwd: "lib/",
-                            src: ["**/*.js"],
-                            dest: "lib/"
-                        }
-                    ],
+                    aliasMappings: [{
+                        cwd: "lib/",
+                        src: ["**/*.js"],
+                        dest: "lib/"
+                    }, {
+                        cwd: "spec/mock/",
+                        src: ["**/*.js"],
+                        dest: "mock/"
+                    }],
                     shim: {
                         "jquery-mockjax": {
                             path: "node_modules/jquery-mockjax/jquery.mockjax.js",
@@ -58,57 +49,83 @@ var configureGrunt = function(grunt) {
                         }
                     }
                 }
-
             }
-
-        },
-
-        jasmine_node: {
-            options: {
-                forceExit: true,
-                useHelpers: true,
-                specNameMatcher: "Spec",
-                helperNameMatcher: "helper",
-            },
-            all: [
-                "spec/server",
-                "spec/helpers"
-            ]
         },
 
         jasmine: {
-            "test-lib": {
+            "test-on-client": {
                 src: "spec/build/lib.js",
                 options: {
                     specs: [
-                        "spec/client/**/*.js",
+                        "spec/client/**/*.js"
                     ],
-                    helpers: [
-                        "spec/helpers/**/*.js"
-                    ],
-                    template: "spec/customTemplate/helpersAfterSrcRunner.tmpl",
-                    keepRunner: true
+                    keepRunner: true,
+                    display: "short",
+                    summary: true
                 }
+            }
+        },
+
+        jshint: {
+            files: [
+                "lib/**/*.js",
+                "spec/**/*.js",
+                "!spec/build/*.js"
+            ],
+            options: {
+                jshintrc: true
             }
         }
 
     });
 
+    grunt.registerTask("jasmine-node:test-on-server", function() {
+        var done = this.async();
+
+        function afterJasmineNodeCompletes() {
+            done();
+        }
+
+        var command = "./node_modules/.bin/jasmine-node";
+
+        var args = [
+            "--matchAll",
+            "spec/helpers/",
+            "spec/server/"
+        ];
+
+        var options = {
+            // Ignore stdin and stderr
+            stdio: ["ignore", process.stdout, "ignore"]
+        };
+
+        spawn(command, args, options)
+            .on("exit", afterJasmineNodeCompletes);
+    });
+
+    grunt.registerTask("test-on-client", [
+        "browserify:test",
+        "jasmine:test-on-client"
+    ]);
+
+    grunt.registerTask("test-on-server", [
+        "jasmine-node:test-on-server"
+    ]);
+
     grunt.registerTask("test", [
         "jshint",
-        "browserify:test",
-        "jasmine",
-        "jasmine_node"
+        "test-on-server",
+        "test-on-client"
     ]);
 
     grunt.registerTask("default", ["test"]);
 
-};
+}
 
 module.exports = configureGrunt;
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

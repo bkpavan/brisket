@@ -14,20 +14,15 @@ describe("Server", function() {
         spyOn(ServerApp.prototype, "start");
     });
 
-    forEach({
-        "clientAppRequirePath is missing": undefined,
-        "clientAppRequirePath is null": null,
-        "clientAppRequirePath is not a string": 12312
-    })
-        .it("throws if {{clientAppRequirePath is NOT string}}", function(clientAppRequirePath) {
-            var creatingServerWithoutClientAppRequirePathString = function() {
-                Server.create(validConfigWith({
-                    clientAppRequirePath: clientAppRequirePath
-                }));
-            };
+    it("throws if clientAppRequirePath is NOT string", function() {
+        function creatingServerWithoutClientAppRequirePathString() {
+            Server.create(validConfigWith({
+                clientAppRequirePath: 123
+            }));
+        }
 
-            expect(creatingServerWithoutClientAppRequirePathString).toThrow();
-        });
+        expect(creatingServerWithoutClientAppRequirePathString).toThrow();
+    });
 
     describe("#create", function() {
 
@@ -35,71 +30,39 @@ describe("Server", function() {
             Server.create(validConfig());
 
             expect(ServerApp.prototype.start).toHaveBeenCalled();
-            expect(ServerApp.prototype.start.callCount).toBe(1);
+            expect(ServerApp.prototype.start.calls.count()).toBe(1);
         });
 
         describe("validating configuration", function() {
 
             it("accepts a missing ServerApp", function() {
-                var creatingServerWithoutServerApp = function() {
+                function creatingServerWithoutServerApp() {
                     Server.create(validConfigWith({
                         ServerApp: undefined
                     }));
-                };
+                }
 
                 expect(creatingServerWithoutServerApp).not.toThrow();
             });
 
             it("rejects ServerApp that is some other type", function() {
-                var creatingServerWithServerAppThatIsAnotherType = function() {
+                function creatingServerWithServerAppThatIsAnotherType() {
                     Server.create(validConfigWith({
                         ServerApp: "not a ServerApp"
                     }));
-                };
+                }
 
                 expect(creatingServerWithServerAppThatIsAnotherType).toThrow();
             });
 
             it("rejects a class that is not a sublcass of ServerApp", function() {
-                var creatingServerWithClassThatIsNOTSubclassOfServerApp = function() {
+                function creatingServerWithClassThatIsNOTSubclassOfServerApp() {
                     Server.create(validConfigWith({
                         ServerApp: App
                     }));
-                };
+                }
 
                 expect(creatingServerWithClassThatIsNOTSubclassOfServerApp).toThrow();
-            });
-
-        });
-
-        describe("for disableXPoweredBy config", function() {
-
-            describe("when disableXPoweredBy is true", function() {
-                it("disables x-powered-by", function() {
-                    var server = Server.create(validConfigWith({
-                        disableXPoweredBy: true
-                    }));
-
-                    expect(server.disabled("x-powered-by")).toBe(true);
-                });
-            });
-
-            describe("when disableXPoweredBy is false", function() {
-                it("does NOT disable x-powered-by", function() {
-                    var server = Server.create(validConfigWith({
-                        disableXPoweredBy: false
-                    }));
-
-                    expect(server.disabled("x-powered-by")).toBe(false);
-                });
-            });
-
-            describe("when disableXPoweredBy is NOT set", function() {
-                it("does NOT disable x-powered-by", function() {
-                    var server = Server.create(validConfig());
-
-                    expect(server.disabled("x-powered-by")).toBe(false);
-                });
             });
 
         });
@@ -110,7 +73,7 @@ describe("Server", function() {
                 Server.create(validConfig());
 
                 expect(ServerApp.prototype.start).toHaveBeenCalled();
-                expect(ServerApp.prototype.start.callCount).toBe(1);
+                expect(ServerApp.prototype.start.calls.count()).toBe(1);
             });
 
         });
@@ -119,20 +82,15 @@ describe("Server", function() {
 
     describe("apiHost", function() {
 
-        forEach({
-            "apiHost is missing": undefined,
-            "apiHost is null": null,
-            "apiHost is not a string": 12312
-        })
-            .it("throws if {{apiHost is NOT string}}", function(apiHost) {
-                var creatingServerWithoutApiHostString = function() {
-                    Server.create(validConfigWith({
-                        apiHost: apiHost
-                    }));
-                };
+        it("throws if apiHost is NOT string", function() {
+            function creatingServerWithoutApiHostString() {
+                Server.create(validConfigWith({
+                    apiHost: 123
+                }));
+            }
 
-                expect(creatingServerWithoutApiHostString).toThrow();
-            });
+            expect(creatingServerWithoutApiHostString).toThrow();
+        });
 
     });
 
@@ -234,23 +192,23 @@ describe("Server", function() {
 
         it("dispatches to server app with leading slash of request path stripped", function() {
             middleware(mockRequest, mockResponse, mockNext);
-            expect(serverApp.dispatch.mostRecentCall.args[0]).toBe("aRoute");
+            expect(serverApp.dispatch.calls.mostRecent().args[0]).toBe("aRoute");
         });
 
         it("dispatches to server app with request host", function() {
             middleware(mockRequest, mockResponse, mockNext);
-            expect(serverApp.dispatch.mostRecentCall.args[1]).toBe(mockRequest);
+            expect(serverApp.dispatch.calls.mostRecent().args[1]).toBe(mockRequest);
         });
 
         it("dispatches to server app with client config", function() {
             middleware(mockRequest, mockResponse, mockNext);
-            expect(serverApp.dispatch.mostRecentCall.args[2]).toBe(environmentConfig);
+            expect(serverApp.dispatch.calls.mostRecent().args[2]).toBe(environmentConfig);
         });
 
         describe("when server app CANNOT handle a request", function() {
 
             beforeEach(function() {
-                serverApp.dispatch.andReturn(null);
+                serverApp.dispatch.and.returnValue(null);
             });
 
             it("forwards onto next middleware", function() {
@@ -268,7 +226,7 @@ describe("Server", function() {
         describe("when server app CAN handle a request", function() {
 
             beforeEach(function() {
-                serverApp.dispatch.andReturn({
+                serverApp.dispatch.and.returnValue({
                     content: "html"
                 });
             });
@@ -291,7 +249,7 @@ describe("Server", function() {
                     }
                 };
 
-                serverApp.dispatch.andReturn(mockServerResponse);
+                serverApp.dispatch.and.returnValue(mockServerResponse);
             });
 
             describe("when a server response callback handler is passed in", function() {
@@ -353,13 +311,13 @@ describe("Server", function() {
     }
 
     function objectPassedToServerApp() {
-        return ServerApp.prototype.start.mostRecentCall.args[0];
+        return ServerApp.prototype.start.calls.mostRecent().args[0];
     }
 
 });
 
 // ----------------------------------------------------------------------------
-// Copyright (C) 2014 Bloomberg Finance L.P.
+// Copyright (C) 2015 Bloomberg Finance L.P.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
